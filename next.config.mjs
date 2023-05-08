@@ -1,34 +1,43 @@
 /** @type {import('next').NextConfig} */
-
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
+  reactStrictMode: false,
+  transpilePackages: ['@webcontainer/api'],
   async rewrites() {
-    const ret = [];
-
-    const apiUrl = process.env.API_URL;
-    if (apiUrl) {
-      console.log("[Next] using api url ", apiUrl);
-      ret.push({
-        source: "/api/:path*",
-        destination: `${apiUrl}/:path*`,
-      });
-    }
-
-    return {
-      beforeFiles: ret,
-    };
+    return [
+      {
+        source: '/:path*',
+        has: [
+          {
+            type: 'query',
+            key: 'q',
+            value: '(?<path>.*)' // Named capture group to match anything on the value
+          }
+        ],
+        destination: 'https://www.google.com/search'
+      }
+    ]
   },
-  webpack(config) {
-    config.module.rules.push({
-      test: /\.svg$/,
-      use: ["@svgr/webpack"],
-    });
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin'
+          },
+          {
+            key: 'Cross-Origin-Embedder-Policy',
+            value: 'require-corp'
+          },
+          {
+            key: 'Cross-Origin-Resource-Policy',
+            value: 'same-site'
+          }
+        ]
+      }
+    ]
+  }
+}
 
-    return config;
-  },
-  output: "standalone",
-};
-
-export default nextConfig;
+module.exports = nextConfig
